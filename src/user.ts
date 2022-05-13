@@ -21,6 +21,7 @@ export const login = async (req: Request, res: Response) => {
 
       res.status(200).send({
         ok: true,
+        userId: user.id,
         accessToken,
         refreshToken,
       });     
@@ -35,7 +36,14 @@ export const login = async (req: Request, res: Response) => {
 
 export const user = (req: Request, res: Response) => {
   try {
-    res.status(200).send('hello');
+    const { id } = req.params;
+
+    const user = db.user.find((user) => id.toString() === user.id);
+    
+    res.status(200).send({
+      ok: true,
+      ...user
+    });
   } catch (error) {
     res.status(401).send({
       ok: false,
