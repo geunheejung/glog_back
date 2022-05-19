@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import { db } from '../mock';
 import { sign, refresh } from './jwt-util';
-import redisClient from './redis';
+import redisClient, { _redis } from './redis';
 
 export const login = async (req: Request, res: Response) => {
   try {
@@ -15,9 +15,9 @@ export const login = async (req: Request, res: Response) => {
       const accessToken = sign(user);
       const refreshToken = refresh();
 
-      await redisClient.connect();
-
-      await redisClient.set(user.id, refreshToken);
+      _redis(async () => {
+        await redisClient.set(user.id === '1' ? user.id : user.id + 1, refreshToken);
+      })
 
       res.status(200).send({
         ok: true,
@@ -26,13 +26,29 @@ export const login = async (req: Request, res: Response) => {
         refreshToken,
       });     
     } 
-  } catch (error) {    
+  } catch (error) {  
+    console.log(error);
+      
     res.status(401).send({
       ok: false,
       message: error,
     });
   }
 };
+
+export const logout = async (req: Request, res: Response) => {
+  try {
+    const { body: { userId } } = req;
+
+    _redis(async () => {
+      await redisClient.del(userId)
+    });
+
+    res.send({ ok: true });
+  } catch (error) {
+    res.status(400).send({ ok: false, message: 'failed logout.' })
+  }
+}
 
 export const user = (req: Request, res: Response) => {
   try {
@@ -45,9 +61,9 @@ export const user = (req: Request, res: Response) => {
       ...user
     });
   } catch (error) {
-    res.status(401).send({
+    res.status(400).send({
       ok: false,
-      message: 'user is incorrect',
+      message: 'failed get user.',
     });
   }
 }

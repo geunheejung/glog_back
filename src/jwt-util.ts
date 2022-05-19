@@ -29,6 +29,8 @@ export const verify = (token: string) => {
       id: decoded.id,
     };
   } catch (err: any) {
+    console.log(err);
+    
     return {
       ok: false,
       message: err.message
