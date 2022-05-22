@@ -57,11 +57,11 @@ export const logout = async (req: Request, res: Response) => {
   }
 }
 
-export const user = (req: Request, res: Response) => {
+export const user = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    const user = findUser(id.toString());
+    const user = await findUser(id.toString());
     
     res.send({
       ok: true,
