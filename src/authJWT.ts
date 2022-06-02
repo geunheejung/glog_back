@@ -15,7 +15,7 @@ const authJWT = (req: Request, res: Response, next: NextFunction) => {
         message: result.message, // jwt가 만료되었다면 메세지는 'jwt expired'입니다.
       });
     }
-  } else {
+  } else {  
     res.status(401).send({
       ok: false,
       message: 'Invalid Token'

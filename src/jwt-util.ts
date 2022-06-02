@@ -1,6 +1,6 @@
 import { promisify } from 'util';
 import jwt from 'jsonwebtoken';
-import redisClient from './redis';
+import redisClient, { _redis } from './redis';
 import { IUser } from '../mock';
 import dotenv from 'dotenv';
 
@@ -28,9 +28,7 @@ export const verify = (token: string) => {
       ok: true,
       id: decoded.id,
     };
-  } catch (err: any) {
-    console.log(err);
-    
+  } catch (err: any) {    
     return {
       ok: false,
       message: err.message
@@ -42,24 +40,20 @@ export const refresh = () => {
   return jwt.sign({}, secret, { algorithm: 'HS256', expiresIn: '14d' });
 }
 
-export const refreshVerify = async (token: string, userId: string | null) => {
-   /* redis 모듈은 기본적으로 promise를 반환하지 않으므로,
-       promisify를 이용하여 promise를 반환하게 해줍니다.*/
-  const getAsync = promisify(redisClient.get).bind(redisClient);
+export const refreshVerify = async (token: string, userId: string) => {
+  redisClient.connect();
+  const data = await redisClient.get(userId);
+  redisClient.disconnect();
 
+  if (token !== data) return { ok: false };
+  
   try {
-    const data = await getAsync(userId);
-    if (token === data) {
-      try {
-        jwt.verify(token, secret);
-        return { ok: true };
-      } catch (err) {
-        return { ok: false };
-      }
-    } else {
-      return { ok: false };
+    jwt.verify(token, secret);
+    return {
+      ok: true
     }
   } catch (err) {
-    return { ok: false };
+    return { ok: false }
   }
+  
 }

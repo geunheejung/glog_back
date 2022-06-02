@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { login, logout, user } from './user';
 import refresh from './refresh';
 import authJWT from './authJWT';
+import { searchPost } from './post';
 
 dotenv.config();
 
@@ -12,6 +13,7 @@ const enum API_PATH {
   Logout = '/logout',
   Refresh = '/refresh',
   User = '/user/:id',
+  Search = '/search/:keyword',
 }
 
 const app = (() => {
@@ -31,3 +33,4 @@ app.post(API_PATH.Login, login);
 app.post(API_PATH.Logout, authJWT, logout);
 app.post(API_PATH.Refresh, refresh);
 app.get(API_PATH.User, authJWT, user);
+app.get(API_PATH.Search, searchPost);
