@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { db, IUser } from '../mock';
 import { sign, refresh } from './jwt-util';
+import Account from './models/account';
 import redisClient, { _redis } from './redis';
 
 const findUser = async (userId: string): Promise<IUser>  => {
@@ -31,7 +32,7 @@ export const login = async (req: Request, res: Response) => {
 
     const accessToken = sign(user);
     const refreshToken = refresh();
-
+    
     await _redis(async () => {
       await redisClient.set(
         user.id === '1' ? user.id : user.id + 1,

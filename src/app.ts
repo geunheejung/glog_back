@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import mongoose from 'mongoose';
 import { login, logout, user } from './user';
 import refresh from './refresh';
 import authJWT from './authJWT';
@@ -20,11 +21,16 @@ const app = (() => {
   const app = express();
 
   app.use(cors());
+  app.use(express.urlencoded({ extended: true }));
   app.use(express.json());
 
   app.listen(process.env.PORT, () => {
     console.log('listening on port', process.env.PORT);
   });
+
+  mongoose.connect((process.env.MONGO_URI as string))
+  .then(() => console.log('Successfully connected to mongodb'))
+  .catch(e => console.error(e));
 
   return app;
 })();
