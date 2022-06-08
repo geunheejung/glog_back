@@ -1,22 +1,24 @@
-import mongoose from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
+import User, { IUser } from './user';
+
+const { Types: { ObjectId } } = Schema;
 
 const accountSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true },
   pw: { type: String, required: true },
-  userId: { type: String, required: true, unique: true }
+  createdAt: { type: Date, default: Date.now },
 });
 
-interface IPayload {
-  id: string;
+export interface IAccount {
+  _id: string;
+  nickname: string;
+  email: string;
   pw: string;
-  userId: string;
 }
 
-accountSchema.statics.create = function (payload: IPayload) {
-  // this === Model
-  const todo = new this(payload);
-  // return Promise
-  return todo.save();
+accountSchema.statics.create = function (payload: IAccount) {
+  const account = new this(payload);
+  return account.save();
 };
 
 const Account = mongoose.model('Account', accountSchema);

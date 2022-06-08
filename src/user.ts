@@ -1,41 +1,51 @@
 import { Request, Response } from 'express';
-import { db, IUser } from '../mock';
+
 import { sign, refresh } from './jwt-util';
-import Account from './models/account';
+import Account, { IAccount  } from './models/account';
+import User, { IUser } from './models/user';
 import redisClient, { _redis } from './redis';
 
-const findUser = async (userId: string): Promise<IUser>  => {
+export const signUp = async (req: Request, res: Response) => {
   try {
-    const user = await db.user.find((user) => userId === user.id);
+    const {
+      body: { nickname, email, pw },
+    } = req;
 
-    if (!user) throw 'Not Found User';
-  
-    return user;
-  } catch(error) {
-    throw error;
+    const account = await Account.findOne({ email }).then((account) => account);
+    
+    if (account) {
+      res.status(400).send({ ok: false, message: '이미 존재하는 계정입니다.' });
+      return;
+    }
+
+    const { _id } = await Account.create({ nickname, email, pw }).then((result) => result);
+    await User.create({ id: _id, nickname, email })    
+
+    res.send({ ok: true, message: '회원가입 완료.' });
+
+  } catch (error) {    
+    res.status(400).send({ ok: false, message: '계정 생성 도중 에러가 발생했습니다.' });
   }
-};
+}
 
 export const login = async (req: Request, res: Response) => {
   try {
     const {
-      body: { id, pw },
+      body: { email, pw },
     } = req;
 
-    const account = await db.account.find(
-      (row) => row.id === id && row.pw === pw
-    );
+    const account = await Account.findOne<IAccount>({ email, pw }).then((account => account));
 
-    if (!account) throw 'Not Found Account';
+    if (!account) throw '비밀번호가 틀렸습니다.';
 
-    const user = await findUser(account.userId);
+    const user = await User.findOne({ id: account._id }).then((user) => user) as IUser;
 
     const accessToken = sign(user);
     const refreshToken = refresh();
     
     await _redis(async () => {
       await redisClient.set(
-        user.id === '1' ? user.id : user.id + 1,
+        user.id,
         refreshToken
       );
     });
@@ -71,11 +81,13 @@ export const user = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    const user = await findUser(id.toString());
+    const user = await User.findOne({ id }).then((user) => user);
+
+    if (!user) throw 'Not Found User';
 
     res.send({
       ok: true,
-      ...user,
+      ...user._doc
     });
   } catch (error) {
     res.status(400).send({
@@ -84,7 +96,3 @@ export const user = async (req: Request, res: Response) => {
     });
   }
 };
-
-export { 
-  findUser
-}

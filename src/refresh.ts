@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { refreshVerify, sign, verify } from './jwt-util';
-import { findUser } from './user';
+import User, { IUser } from './models/user';
 
 const refresh = async (req: Request, res: Response) => {
   try {
@@ -27,7 +27,8 @@ const refresh = async (req: Request, res: Response) => {
           res.status(401).send({ ok: false, message: 'Token expired && No authorized' });
         } else {
           // 2. access token이 만료되고, refresh token은 만료되지 않은 경우 => 새로운 access token 발급
-          const user = await findUser(decoded.id);
+          const user = await User.findOne<IUser>({ _id: decoded.id }).then((user) => user) as 
+          IUser;
           const newAccessToken = sign(user);
 
           res.status(200).send({ ok: true, data: { 

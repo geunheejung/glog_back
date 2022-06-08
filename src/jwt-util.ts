@@ -1,8 +1,9 @@
 import { promisify } from 'util';
 import jwt from 'jsonwebtoken';
 import redisClient, { _redis } from './redis';
-import { IUser } from '../mock';
+
 import dotenv from 'dotenv';
+import { IUser } from './models/user';
 
 dotenv.config();
 
